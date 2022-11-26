@@ -117,8 +117,7 @@ class BombEquation:
                                          or len(self.bombs) == len(self.tiles) + 1)
 
     def split(self) -> list['BombEquation']:
-        """
-        Return a set of BombEquations representing this one having been split into simpler componenets.
+        """Return a set of BombEquations representing this one having been split into simpler componenets.
         Only to be used if self.is_splittable().
 
         :return: a set of BombEquations representing this one having been split into simpler componenets
