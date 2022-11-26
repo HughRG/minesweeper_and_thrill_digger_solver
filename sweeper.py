@@ -378,6 +378,7 @@ class Solution:
         constraints is not changed.
 
         :param constraints: a list of constraints that must be satisfied in the solution
+        :return: a Solution corresponding to the contraints
 
         >>> Solution.solve_area([]) == Solution({0: ({}, 1)})
         True
@@ -462,7 +463,7 @@ class Sweeper:
     constraints:
         A list of constraints on the layout of the bombs imposed by uncovered tiles' information.
     unconstrained_tiles:
-        A list of tiles' coordinates that have no uncovered (number) tiles around them.
+        A list of tiles' coordinates that have no uncovered number tiles around them.
     message:
         A message telling the user if the inputted information is invalid.
     """
@@ -536,7 +537,7 @@ class Sweeper:
         :return: a tuple, the first element a dictionary whose keys are tiles and values are the number of layouts in
         which the tile has a bomb, the second element the total number of layouts
         """
-        # calculate the probabilities for all the unknown tiles
+        # calculate the probabilities for all the unknown tiles, with (-1, -1) representing each unconstrained tile
         bomb_instances = {}
         num_unconstrained_tiles = len(self.unconstrained_tiles)
         num_layouts = 0
@@ -562,6 +563,10 @@ class Sweeper:
         :param bomb_instances: the number of layouts in which a given tile has a bomb
         :param total_num_layouts: the total number of layouts
         """
+        if not total_num_layouts:
+            self.message = 'Impossible layout'
+            return
+
         consistent_tiles = []
         for tile in bomb_instances:
             row, column = tile
@@ -575,39 +580,31 @@ class Sweeper:
                 consistent_tiles.append(BombEquation((tile, ), (1, )))
                 if tile in self.unconstrained_tiles:
                     self.unconstrained_tiles.remove(tile)
-                if self.board[row][column] != 'Rupoor':
+                if self.board[row][column] not in ('B', 'Rupoor'):
                     self.board[row][column] = 'B/R'
             else:
                 self.board[row][column] = f'{round(100 * bomb_instances[tile] / total_num_layouts)}%'
         BombEquation.integrate_new_bomb_eqs(self.constraints, consistent_tiles)
 
     def reset(self) -> None:
-        """
-        Reset the attributes.
-        """
+        """Reset the attributes."""
         self.board = [[''] * self.width for _ in range(self.height)]
         self.constraints = []
         self.unconstrained_tiles = [(i, j) for i in range(self.height) for j in range(self.width)]
         self.message = ''
 
     def set_classic(self) -> None:
-        """
-        Set the game to be the classic version of Minesweeper.
-        """
+        """Set the game to be the classic version of Minesweeper."""
         self.version = 'Classic'
         self.set_easy()
 
     def set_thrill_digger(self) -> None:
-        """
-        Set the game to be the Thrill Digger version of Minesweeper.
-        """
+        """Set the game to be the Thrill Digger version of Minesweeper."""
         self.version = 'Thrill Digger'
         self.set_easy()
 
     def set_easy(self) -> None:
-        """
-        Set the difficulty to easy and reset the game.
-        """
+        """Set the difficulty to easy and reset the game."""
         if self.version == 'Classic':
             self.height = 9
             self.width = 9
@@ -619,9 +616,7 @@ class Sweeper:
         self.reset()
 
     def set_medium(self) -> None:
-        """
-        Set the difficulty to medium and reset the game.
-        """
+        """Set the difficulty to medium and reset the game."""
         if self.version == 'Classic':
             self.height = 16
             self.width = 16
@@ -633,9 +628,7 @@ class Sweeper:
         self.reset()
 
     def set_hard(self) -> None:
-        """
-        Set the difficulty to hard and reset the game.
-        """
+        """Set the difficulty to hard and reset the game."""
         if self.version == 'Classic':
             self.height = 16
             self.width = 30
@@ -647,9 +640,7 @@ class Sweeper:
         self.reset()
 
     def set_custom(self, height: int, width: int, bombs: int) -> None:
-        """
-        Set the custom difficulty and reset the game.
-        """
+        """Set the custom difficulty and reset the game."""
         self.height = height
         self.width = width
         self.bombs = bombs
@@ -660,6 +651,8 @@ class SweeperWindow:
     """The UI for the Sweeper class.
 
     === Public Attributes ===
+    sweeper:
+        The Sweeper that this UI interfaces with.
     root:
         The background.
     field:
@@ -668,16 +661,6 @@ class SweeperWindow:
         A list of lists of entries making up the game board.
     message:
         A message telling the user if the inputted information is invalid.
-
-    === Private Attributes ===
-    blah:
-        description
-    blah2:
-        description
-
-    === Representation Invariants ===
-    - asdf
-    - asdf
     """
     sweeper: Sweeper
     root: Tk
@@ -686,8 +669,7 @@ class SweeperWindow:
     message: StringVar
 
     def __init__(self, starting_value: Optional[list[list[str]]] = None) -> None:
-        """Initialize this Sweeper's boards and attributes.
-        """
+        """Initialize this Sweeper's boards and attributes."""
         self.sweeper = Sweeper()
 
         self.root = Tk()
@@ -734,8 +716,7 @@ class SweeperWindow:
         self.root.mainloop()
 
     def create_board(self) -> list[list[Entry]]:
-        """Create and return the default solver board.
-        """
+        """Create and return the default solver board."""
         board = []
         for i in range(self.sweeper.height):
             board.append([])
@@ -749,9 +730,7 @@ class SweeperWindow:
         return board
 
     def receive_input(self) -> None:
-        """
-        Receive the input info from the board and display the new results.
-        """
+        """Receive the input info from the board and display the new results."""
         for row in range(self.sweeper.height):
             for column in range(self.sweeper.width):
                 self.sweeper.integrate_new_info(row, column, self.board[row][column].get())
@@ -759,14 +738,12 @@ class SweeperWindow:
         self.refresh_display()
 
     def recalculate(self) -> None:
-        """An error has been made, so recalculate everything.
-        """
+        """To be used when an error has been made, so recalculate everything."""
         self.sweeper.reset()
         self.receive_input()
 
     def refresh_display(self) -> None:
-        """Update the display.
-        """
+        """Update the display."""
         for row in range(len(self.board)):
             for column in range(len(self.board[0])):
                 self.board[row][column].delete(0, END)
@@ -774,38 +751,32 @@ class SweeperWindow:
         self.message.set(self.sweeper.message)
 
     def set_classic(self) -> None:
-        """Set the game to be the classic version of Minesweeper.
-        """
+        """Set the game to be the classic version of Minesweeper."""
         self.sweeper.set_classic()
         self.reset()
 
     def set_thrill_digger(self) -> None:
-        """Set the game to be the Thrill Digger version of Minesweeper.
-        """
+        """Set the game to be the Thrill Digger version of Minesweeper."""
         self.sweeper.set_thrill_digger()
         self.reset()
 
     def set_easy(self) -> None:
-        """Set the difficulty to easy and reset the game.
-        """
+        """Set the difficulty to easy and reset the game."""
         self.sweeper.set_easy()
         self.reset()
 
     def set_medium(self) -> None:
-        """Set the difficulty to easy and reset the game.
-        """
+        """Set the difficulty to easy and reset the game."""
         self.sweeper.set_medium()
         self.reset()
 
     def set_hard(self) -> None:
-        """Set the difficulty to easy and reset the game.
-        """
+        """Set the difficulty to easy and reset the game."""
         self.sweeper.set_hard()
         self.reset()
 
     def set_custom(self, height: int = 0, width: int = 0, bombs: int = 0) -> None:
-        """Set the difficulty to easy and reset the game.
-        """
+        """Set a custom difficulty and reset the game."""
         if not (height and width and bombs):
             height = int(input('height: '))
             width = int(input('width: '))
@@ -814,8 +785,7 @@ class SweeperWindow:
         self.reset()
 
     def reset(self) -> None:
-        """Reset everything.
-        """
+        """Reset everything."""
         # reset all the attributes
         self.sweeper.reset()
 
@@ -831,39 +801,44 @@ class SweeperWindow:
 
 
 def return_neighbours(row: int, column: int, height: int, width: int) -> list[tuple[int, int]]:
-    """Given a row, column, height, and width, return a list of coordinates of surrounding tiles.
+    """Given a tile's row and column, and the board's height and width,
+    return a list of coordinates of surrounding tiles.
+
+    :param row: row of tile in question
+    :param column: column of tile in question
+    :param height: height of board in tiles
+    :param width: width of board in tiles
+    :return: all the tile's neighbours (sorted lexicographically)
+
+    >>> return_neighbours(0, 0, 1, 1)
+    []
+    >>> return_neighbours(0, 0, 9, 9)
+    [(0, 1), (1, 0), (1, 1)]
+    >>> return_neighbours(0, 3, 9, 9)
+    [(0, 2), (0, 4), (1, 2), (1, 3), (1, 4)]
+    >>> return_neighbours(0, 8, 9, 9)
+    [(0, 7), (1, 7), (1, 8)]
+    >>> return_neighbours(6, 0, 9, 9)
+    [(5, 0), (5, 1), (6, 1), (7, 0), (7, 1)]
+    >>> return_neighbours(2, 7, 9, 9)
+    [(1, 6), (1, 7), (1, 8), (2, 6), (2, 8), (3, 6), (3, 7), (3, 8)]
+    >>> return_neighbours(1, 8, 9, 9)
+    [(0, 7), (0, 8), (1, 7), (2, 7), (2, 8)]
+    >>> return_neighbours(8, 0, 9, 9)
+    [(7, 0), (7, 1), (8, 1)]
+    >>> return_neighbours(8, 5, 9, 9)
+    [(7, 4), (7, 5), (7, 6), (8, 4), (8, 6)]
+    >>> return_neighbours(8, 8, 9, 9)
+    [(7, 7), (7, 8), (8, 7)]
     """
-    # corners
-    if row == 0 and column == 0:
-        return [(0, 1), (1, 1), (1, 0)]
-
-    elif row == 0 and column == width - 1:
-        return [(0, column - 1), (1, column - 1), (1, column)]
-
-    elif row == height - 1 and column == width - 1:
-        return [(row, column - 1), (row - 1, column - 1), (row - 1, column)]
-
-    elif row == height - 1 and column == 0:
-        return [(row - 1, 0), (row - 1, 1), (row, 1)]
-
-    # top and bottom
-    elif row == 0:
-        return [(0, column - 1), (1, column - 1), (1, column), (1, column + 1), (0, column + 1)]
-
-    elif row == height - 1:
-        return [(row, column - 1), (row - 1, column - 1), (row - 1, column), (row - 1, column + 1), (row, column + 1)]
-
-    # left and right
-    elif column == 0:
-        return [(row - 1, 0), (row - 1, 1), (row, 1), (row + 1, 1), (row + 1, 0)]
-
-    elif column == width - 1:
-        return [(row - 1, column), (row - 1, column - 1), (row, column - 1), (row + 1, column - 1), (row + 1, column)]
-
-    # middle
-    else:
-        return [(row - 1, column - 1), (row - 1, column), (row - 1, column + 1), (row, column + 1),
-                (row + 1, column + 1), (row + 1, column), (row + 1, column - 1), (row, column - 1)]
+    return (([(row - 1, column - 1)] * (column > 0)
+             + [(row - 1, column)]
+             + [(row - 1, column + 1)] * (column < width - 1)) * (row > 0)
+            + [(row, column - 1)] * (column > 0)
+            + [(row, column + 1)] * (column < width - 1)
+            + ([(row + 1, column - 1)] * (column > 0)
+               + [(row + 1, column)]
+               + [(row + 1, column + 1)] * (column < width - 1)) * (row < height - 1))
 
 
 def comb(n: int, k: int):
@@ -881,22 +856,3 @@ def comb(n: int, k: int):
 
 if __name__ == '__main__':
     SweeperWindow()
-    # print('Setup')
-    # s = Sweeper(version='Thrill Digger')
-    # s.set_hard()
-    # s.integrate_new_info(0, 0, 'Blue')
-    # s.integrate_new_info(0, 2, 'Red')
-    # s.integrate_new_info(1, 0, 'Blue')
-    # s.integrate_new_info(1, 4, 'Rupoor')
-    # s.integrate_new_info(1, 5, 'Red')
-    # s.integrate_new_info(2, 5, 'Red')
-    # s.integrate_new_info(3, 0, 'Blue')
-    # s.integrate_new_info(3, 1, 'Red')
-    # s.integrate_new_info(3, 3, 'Silver')
-    # s.integrate_new_info(3, 5, 'B')
-    # s.integrate_new_info(3, 6, 'Red')
-    # s.integrate_new_info(4, 0, 'Green')
-    # s.integrate_new_info(4, 1, 'Blue')
-    # s.calculate_board()
-    # print('Timing')
-    # cProfile.run('s.calculate_board()')
