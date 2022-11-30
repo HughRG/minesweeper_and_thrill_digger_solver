@@ -327,7 +327,7 @@ class ThrillDigger(Minesweeper):
     rupoors_left:
         The number of non-lethal bombs yet to be uncovered.
     """
-    RUPEE_TO_BOMBS: dict[str, tuple[int]] = {'Green': (0, ), 'Blue': (1, 2), 'Red': (3, 4),
+    RUPEE_TO_BOMBS: dict[str, tuple[int]] = {'Green': (0,), 'Blue': (1, 2), 'Red': (3, 4),
                                              'Silver': (5, 6), 'Gold': (7, 8)}
     BOMBS_TO_RUPEE: dict[int, str] = {0: 'Green', 1: 'Blue', 2: 'Blue', 3: 'Red', 4: 'Red',
                                       5: 'Silver', 6: 'Silver', 7: 'Gold', 8: 'Gold'}

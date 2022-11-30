@@ -100,15 +100,15 @@ class BombEquation:
         :return: this equation does not involve a single tile and is either useless or can
         singlehandedly determine whether each of its tiles have a bomb
 
-        >>> BombEquation([(0, 0), (0, 1), (1, 0)], (0, )).is_splittable()
+        >>> BombEquation([(0, 0), (0, 1), (1, 0)], (0,)).is_splittable()
         True
-        >>> BombEquation([(0, 0), (0, 1), (1, 0)], (3, )).is_splittable()
+        >>> BombEquation([(0, 0), (0, 1), (1, 0)], (3,)).is_splittable()
         True
         >>> BombEquation([(0, 0), (0, 1), (1, 0)], (0, 1, 2, 3)).is_splittable()
         True
-        >>> BombEquation([(0, 0)], (0, )).is_splittable()
+        >>> BombEquation([(0, 0)], (0,)).is_splittable()
         False
-        >>> BombEquation([(0, 0), (0, 1), (1, 0)], (1, )).is_splittable()
+        >>> BombEquation([(0, 0), (0, 1), (1, 0)], (1,)).is_splittable()
         False
         >>> BombEquation([(0, 0), (0, 1), (1, 0)], (0, 3)).is_splittable()
         False
@@ -122,23 +122,23 @@ class BombEquation:
 
         :return: a set of BombEquations representing this one having been split into simpler componenets
 
-        >>> components = BombEquation([(0, 0), (0, 1), (1, 0)], (0, )).split()
+        >>> components = BombEquation([(0, 0), (0, 1), (1, 0)], (0,)).split()
         >>> len(components)
         3
-        >>> BombEquation([(0, 0)], (0, )) in components
+        >>> BombEquation([(0, 0)], (0,)) in components
         True
-        >>> BombEquation([(0, 1)], (0, )) in components
+        >>> BombEquation([(0, 1)], (0,)) in components
         True
-        >>> BombEquation([(1, 0)], (0, )) in components
+        >>> BombEquation([(1, 0)], (0,)) in components
         True
-        >>> components = BombEquation([(0, 0), (0, 1), (1, 0)], (3, )).split()
+        >>> components = BombEquation([(0, 0), (0, 1), (1, 0)], (3,)).split()
         >>> len(components)
         3
-        >>> BombEquation({(0, 0)}, (1, )) in components
+        >>> BombEquation({(0, 0)}, (1,)) in components
         True
-        >>> BombEquation({(0, 1)}, (1, )) in components
+        >>> BombEquation({(0, 1)}, (1,)) in components
         True
-        >>> BombEquation({(1, 0)}, (1, )) in components
+        >>> BombEquation({(1, 0)}, (1,)) in components
         True
         >>> components = BombEquation({(0, 0), (0, 1), (1, 0)}, (0, 1, 2, 3)).split()
         >>> len(components)
@@ -151,9 +151,9 @@ class BombEquation:
         True
         """
         if len(self.bombs) > 1:
-            return [BombEquation((tile, ), (0, 1)) for tile in self.tiles]
+            return [BombEquation((tile,), (0, 1)) for tile in self.tiles]
         bomb = int(bool(self.bombs[0]))
-        return [BombEquation((tile, ), (bomb, )) for tile in self.tiles]
+        return [BombEquation((tile,), (bomb,)) for tile in self.tiles]
 
     def is_impossible(self) -> bool:
         """Return True iff this equation is impossible to satisfy.
@@ -370,8 +370,8 @@ class Solution:
                     tile_to_return = tile
         return tile_to_return
 
-    @staticmethod
-    def solve_area(constraints: list[BombEquation]) -> 'Solution':
+    @classmethod
+    def solve_area(cls, constraints: list[BombEquation]) -> 'Solution':
         """Get a Solution corresponding to these contraints.
 
         constraints is not changed.
@@ -421,23 +421,23 @@ class Solution:
             return solution_so_far
 
         # group the constraints by overlap
-        grouped_constraints = Solution.group_constraints(constraints)
+        grouped_constraints = cls.group_constraints(constraints)
         # the combined solution for all processed groups
         solution_so_far = Solution({0: ({}, 1)})
         for constraint_group in grouped_constraints:
-            recurse_tile = Solution.find_tile_to_recurse_on(constraint_group)
+            recurse_tile = cls.find_tile_to_recurse_on(constraint_group)
             group_solution: Solution = Solution({})
             for bomb in (0, 1):
                 # make a copy of the constraints so that any changes we make can be reversed
                 constraint_group_copy = constraint_group.copy()
-                new_bomb_eq = BombEquation((recurse_tile, ), (bomb, ))
+                new_bomb_eq = BombEquation((recurse_tile,), (bomb,))
                 # if you can successfully integrate this tile as a bomb/not a bomb
                 if BombEquation.integrate_new_bomb_eqs(constraint_group_copy, [new_bomb_eq]):
                     # remove this constraint so that the size of the area decreases by 1
                     constraint_group_copy.remove(new_bomb_eq)
                     # recurse
                     group_solution += (Solution({bomb: ({recurse_tile: bomb}, 1)})
-                                       * Solution.solve_area(constraint_group_copy))
+                                       * cls.solve_area(constraint_group_copy))
             solution_so_far *= group_solution
         # combine and return all the areas
         return solution_so_far
@@ -515,13 +515,13 @@ class Sweeper:
                     self.unconstrained_tiles.remove(neighbour)
             if not BombEquation.integrate_new_bomb_eqs(
                     self.constraints,
-                    [BombEquation((tile, ), (0, )),
+                    [BombEquation((tile,), (0,)),
                      BombEquation(neighbours, Sweeper.BOMB_KEY[self.version][info])]):
                 self.message = 'Impossible layout'
         elif info in ('B', 'Rupoor'):
             if tile in self.unconstrained_tiles:
                 self.unconstrained_tiles.remove(tile)
-            if not BombEquation.integrate_new_bomb_eqs(self.constraints, [BombEquation((tile, ), (1, ))]):
+            if not BombEquation.integrate_new_bomb_eqs(self.constraints, [BombEquation((tile,), (1,))]):
                 self.message = 'Impossible layout'
 
     def calculate_board(self) -> None:
@@ -572,11 +572,11 @@ class Sweeper:
             if bomb_instances[tile] == 0:
                 if self.board[row][column] not in Sweeper.BOMB_KEY[self.version]:
                     self.board[row][column] = 'S'
-                    consistent_tiles.append(BombEquation((tile, ), (0, )))
+                    consistent_tiles.append(BombEquation((tile,), (0,)))
                     if tile in self.unconstrained_tiles:
                         self.unconstrained_tiles.remove(tile)
             elif bomb_instances[tile] == total_num_layouts:
-                consistent_tiles.append(BombEquation((tile, ), (1, )))
+                consistent_tiles.append(BombEquation((tile,), (1,)))
                 if tile in self.unconstrained_tiles:
                     self.unconstrained_tiles.remove(tile)
                 if self.board[row][column] not in ('B', 'Rupoor'):
