@@ -406,27 +406,27 @@ class Solution:
         True
         """
         if not constraints:
-            return Solution({0: ({}, 1)})
+            return cls({0: ({}, 1)})
 
-        solution_so_far: Solution
+        solution_so_far: cls
 
         if len(constraints) == 1:
             only_constraint = constraints[0]
             num_tiles = len(only_constraint.tiles)
-            solution_so_far = Solution({})
+            solution_so_far = cls({})
             for bombs in only_constraint.bombs:
-                solution_so_far += Solution({bombs: ({tile: comb(num_tiles - 1, bombs - 1)
-                                                      for tile in only_constraint.tiles},
-                                                     comb(num_tiles, bombs))})
+                solution_so_far += cls({bombs: ({tile: comb(num_tiles - 1, bombs - 1)
+                                                 for tile in only_constraint.tiles},
+                                                comb(num_tiles, bombs))})
             return solution_so_far
 
         # group the constraints by overlap
         grouped_constraints = cls.group_constraints(constraints)
         # the combined solution for all processed groups
-        solution_so_far = Solution({0: ({}, 1)})
+        solution_so_far = cls({0: ({}, 1)})
         for constraint_group in grouped_constraints:
             recurse_tile = cls.find_tile_to_recurse_on(constraint_group)
-            group_solution: Solution = Solution({})
+            group_solution: cls = cls({})
             for bomb in (0, 1):
                 # make a copy of the constraints so that any changes we make can be reversed
                 constraint_group_copy = constraint_group.copy()
@@ -436,7 +436,7 @@ class Solution:
                     # remove this constraint so that the size of the area decreases by 1
                     constraint_group_copy.remove(new_bomb_eq)
                     # recurse
-                    group_solution += (Solution({bomb: ({recurse_tile: bomb}, 1)})
+                    group_solution += (cls({bomb: ({recurse_tile: bomb}, 1)})
                                        * cls.solve_area(constraint_group_copy))
             solution_so_far *= group_solution
         # combine and return all the areas
